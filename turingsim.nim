@@ -17,7 +17,8 @@ type
 
   TuringError = object of Exception
 
-proc newTuringMachine(initialTape = "", emptyChar = '*'): TuringMachine =
+proc newTuringMachine(initialTape = "", initialPos = 0,
+                      emptyChar = '*'): TuringMachine =
   new result
   for i in -1000 .. 1000:
     result.tape[i] = '*'
@@ -25,7 +26,7 @@ proc newTuringMachine(initialTape = "", emptyChar = '*'): TuringMachine =
     for i in 0 .. <initialTape.len:
       result.tape[i] = initialTape[i]
 
-  result.tapeLoc = 0
+  result.tapeLoc = initialPos
   result.currState = "q0"
   result.transitions = initTable[TransitionInput, TransitionOutput]()
 
@@ -114,21 +115,78 @@ proc startUiLoop(tm: TuringMachine) =
 
     var line = stdin.readLine()
     case line
-    of "n", "next":
+    of "n", "next", "":
       try:
         tm.next()
       except TuringError:
         errorMsg = getCurrentExceptionMsg()
 
 when isMainModule:
-  var tm = newTuringMachine("A101A")
-  # Define the transitions
-  tm.addTransition(("q0", '1', "q0", '1', R))
-  tm.addTransition(("q0", '0', "q0", '0', R))
-  tm.addTransition(("q0", 'A', "q_start", 'A', R))
-  tm.addTransition(("q_start", '1', "q_start", '0', R))
-  tm.addTransition(("q_start", '0', "q_start", '1', R))
-  tm.addTransition(("q_start", 'A', "qH", 'A', C))
+
+  # 1s complement (Q1)
+  when true:
+    var tm = newTuringMachine("A101A")
+    # Define the transitions
+    tm.addTransition(("q0", '1', "q0", '1', R))
+    tm.addTransition(("q0", '0', "q0", '0', R))
+    tm.addTransition(("q0", 'A', "q_start", 'A', R))
+    tm.addTransition(("q_start", '1', "q_start", '0', R))
+    tm.addTransition(("q_start", '0', "q_start", '1', R))
+    tm.addTransition(("q_start", 'A', "qH", 'A', C))
+
+  # Unary subtractor (Q2)
+  when false:
+    var tm = newTuringMachine("A111B11C", 4)
+
+    tm.addTransition(("q0", 'B', "q0", 'B', R))
+    tm.addTransition(("q0", 'C', "qH", 'C', C))
+    tm.addTransition(("q0", '1', "q_sub", 'B', L))
+    tm.addTransition(("q_sub", '1', "q0", 'B', R))
+    tm.addTransition(("q_sub", 'B', "q_sub", 'B', L))
+
+  # Copying (Q3)
+  when false:
+    var tm = newTuringMachine("000")
+
+    tm.addTransition(("q0", '0', "q_copy", 'C', R))
+    tm.addTransition(("q0", '#', "qH", '#', C))
+    tm.addTransition(("q_copy", '#', "q_place", '#', R))
+    tm.addTransition(("q_copy", '*', "q_place", '#', R))
+    tm.addTransition(("q_copy", '0', "q_copy", '0', R))
+    tm.addTransition(("q_place", '*', "q_back", '0', L))
+    tm.addTransition(("q_place", '0', "q_place", '0', R))
+    tm.addTransition(("q_back", 'C', "q0", '0', R))
+    tm.addTransition(("q_back", '0', "q_back", '0', L))
+    tm.addTransition(("q_back", '#', "q_back", '#', L))
+
+  # Sorting (Q4)
+  when false:
+    #var tm = newTuringMachine("AyxxA")
+    #var tm = newTuringMachine("AyxyxxyyyA")
+    #var tm = newTuringMachine("AyxyxyxyxA")
+    var tm = newTuringMachine("AxxxxxA")
+
+    tm.addTransition(("q0", 'x', "q0", 'x', R))
+    tm.addTransition(("q0", 'A', "q0", 'A', R))
+    tm.addTransition(("q0", 'y', "q_find_x", 'M', R))
+    tm.addTransition(("q_find_x", 'y', "q_find_x", 'y', R))
+    tm.addTransition(("q_find_x", 'A', "q_replace_M", 'A', L))
+    tm.addTransition(("q_find_x", 'x', "q_find_M", 'y', L))
+    tm.addTransition(("q_replace_M", 'y', "q_replace_M", 'y', L))
+    tm.addTransition(("q_replace_M", 'M', "qH", 'y', R))
+    tm.addTransition(("q_find_M", 'x', "q_find_M", 'x', L))
+    tm.addTransition(("q_find_M", 'y', "q_find_M", 'y', L))
+    tm.addTransition(("q_find_M", 'M', "q0", 'x', R))
+    # TODO: Add a q0 transition to the halt state.
+
+  # Q5 - Unary addition.
+  when false:
+    var tm = newTuringMachine("A111B1111A", 4)
+
+    tm.addTransition(("q0", 'B', "q1", '1', R))
+    tm.addTransition(("q1", '1', "q1", '1', R))
+    tm.addTransition(("q1", 'A', "q2", '*', L))
+    tm.addTransition(("q2", '1', "qH", 'A', C))
 
   startUiLoop(tm)
 
