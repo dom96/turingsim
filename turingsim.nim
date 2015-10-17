@@ -54,9 +54,23 @@ proc next(tm: TuringMachine) =
   of C:
     discard
 
+proc showTransitions(tm: TuringMachine) =
+  terminal.setCursorPos(2, 34)
+  for key, val in tm.transitions:
+    if key.currState == tm.currState and key.currInput == tm.tape[tm.tapeLoc]:
+      setForegroundColor(fgGreen)
+    stdout.write("($#, $#, $#, $#, $#)\n  " % [key.currState, $key.currInput,
+        val.nextState, $val.output, $val.direction])
+    resetAttributes()
+
 proc showUiTuring(tm: TuringMachine, errorMsg = "") =
+  ## Draw the UI of the Turing Simulator
+
+  # Draw the top of the tape.
   terminal.setCursorPos(2, 30)
   stdout.write("-------------------------------------------")
+
+  # Draw the tape contents.
   terminal.setCursorPos(2, 31)
   stdout.write("|")
   for i in -10 .. 10:
@@ -68,16 +82,24 @@ proc showUiTuring(tm: TuringMachine, errorMsg = "") =
       resetAttributes()
     else:
       stdout.write(tm.tape[i] & "|")
+
+  # Draw the current state.
   stdout.write("     " & tm.currState)
+
+  # Draw the bottom of the tape.
   terminal.setCursorPos(2, 32)
   stdout.write("-------------------------------------------")
 
+  showTransitions(tm)
+
+  # Show error if one exists.
   if errorMsg.len > 0:
     terminal.setCursorPos(0, 49)
     setForegroundColor(fgRed)
     stdout.write(errorMsg)
     resetAttributes()
 
+  # Show prompt.
   terminal.setCursorPos(0, 50)
   stdout.write("TuringSim> ")
 
